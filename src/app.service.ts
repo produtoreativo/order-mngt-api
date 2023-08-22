@@ -1,12 +1,19 @@
 import { HttpService } from '@nestjs/axios';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import Order from './order/Product';
 import OrderDto from './OrderDto';
 
+import * as newrelic from 'newrelic';
+
 @Injectable()
 export class AppService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    @InjectPinoLogger(AppService.name)
+    private readonly logger: PinoLogger,
+  ) {}
 
   getOrder(id: string) {
     throw new Error('Method not implemented.');
@@ -20,14 +27,14 @@ export class AppService {
         Authorization: `Bearer ${orderDto.token}`,
       };
 
-      console.log('Headers', headers);
+      this.logger.info('Headers', headers);
 
-      console.log('#1: CRIA O CARRINHO OU QUOTE');
+      this.logger.info('#1: CRIA O CARRINHO OU QUOTE');
       const responde_quote_id = await this.httpService.axiosRef.post(pathUrl, {}, { headers });
       const quote_id = responde_quote_id.data;
-      console.log('#1.1: CRIOU O CARRINHO OU QUOTE', quote_id);
+      this.logger.info('#1.1: CRIOU O CARRINHO OU QUOTE', quote_id);
 
-      console.log('#2: ADICIONA O ITEM AO CARRINHO');
+      this.logger.info('#2: ADICIONA O ITEM AO CARRINHO');
       const data = {
         cartItem: {
           sku: orderDto.sku,
@@ -35,15 +42,15 @@ export class AppService {
           quote_id,
         },
       };
-      console.log('#2.1: preparou os dados', data);
+      this.logger.info('#2.1: preparou os dados', data);
       const cart = await this.httpService.axiosRef.post(
         `${pathUrl}/items`,
         data,
         { headers },
       );
-      console.log('#2.2: Adicionou o Item ao carrinho', cart.data);
+      this.logger.info('#2.2: Adicionou o Item ao carrinho', cart.data);
 
-      console.log('#3: Adiciona o endereço');
+      this.logger.info('#3: Adiciona o endereço');
       const address = {
         addressInformation: {
           shipping_address: {
@@ -81,9 +88,9 @@ export class AppService {
         address,
         { headers },
       );
-      console.log('#3.1: Adicionou o endereço ', cart2.data);
+      this.logger.info('#3.1: Adicionou o endereço ', cart2.data);
 
-      console.log('#4: INFORMA MEIO DE PAGAMENTO');
+      this.logger.info('#4: INFORMA MEIO DE PAGAMENTO');
       const payment = {
         paymentMethod: { method: 'checkmo' },
       };
@@ -92,14 +99,25 @@ export class AppService {
         payment,
         { headers },
       );
-      console.log('#4.1: Fechou o pedido ', cart3.data);
+      this.logger.info('#4.1: Fechou o pedido ', cart3.data);
 
       return cart3.data;
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
+      const timestamp = Date.now();
+      newrelic.recordLogEvent({
+        message: e.message || 'AggregateError',
+        level: 'error',
+        timestamp,
+        e,
+      });
+      const isExpected = false;
+      newrelic.noticeError(e, e.metadata, isExpected);
+      // const error = new Error(e.message || 'AggregateError');
+      // this.logger.setContext('ExceptionsHandler');
+      // this.logger.error(error);
     }
 
-    return null;
+    // return null;
   }
 
   findAll(): Promise<AxiosResponse<Order[]>> {
