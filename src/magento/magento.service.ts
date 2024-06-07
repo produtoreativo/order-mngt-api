@@ -110,34 +110,36 @@ export class MagentoService {
     return response.data;
   }
 
-  async placeOrder(token: string, cartId: string): Promise<any> {
-    const url = `${this.magentoUrl}/rest/V1/carts/mine/order`;
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-    console.log(`Placing order with token: ${token} and URL: ${url}`);
+  // https://developer.adobe.com/commerce/webapi/rest/tutorials/orders/order-create-order/
+  //
+  // async placeOrder(token: string, cartId: string): Promise<any> {
+  //   const url = `${this.magentoUrl}/rest/V1/carts/mine/order`;
+  //   const headers = {
+  //     Authorization: `Bearer ${token}`,
+  //     'Content-Type': 'application/json',
+  //   };
+  //   console.log(`Placing order with token: ${token} and URL: ${url}`);
 
-    try {
-      const response = await axios.put(url, { cartId }, { headers });
-      console.log('Order placed successfully:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('placeOrder - Detalhes do erro:', error);
-      if (error.response) {
-        console.error(
-          `placeOrder - Erro na resposta da API: Status ${error.response.status}`,
-          error.response.data,
-        );
-        throw new Error(
-          error.response.data.message || 'Erro na resposta da API',
-        );
-      } else {
-        console.error('placeOrder - Erro na requisição:', error.message);
-        throw new Error('Erro na requisição para a API Magento');
-      }
-    }
-  }
+  //   try {
+  //     const response = await axios.put(url, { cartId }, { headers });
+  //     console.log('Order placed successfully:', response.data);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('placeOrder - Detalhes do erro:', error);
+  //     if (error.response) {
+  //       console.error(
+  //         `placeOrder - Erro na resposta da API: Status ${error.response.status}`,
+  //         error.response.data,
+  //       );
+  //       throw new Error(
+  //         error.response.data.message || 'Erro na resposta da API',
+  //       );
+  //     } else {
+  //       console.error('placeOrder - Erro na requisição:', error.message);
+  //       throw new Error('Erro na requisição para a API Magento');
+  //     }
+  //   }
+  // }
 
   async getUserDetails(token: string): Promise<any> {
     const url = `${this.magentoUrl}/rest/V1/customers/me`;

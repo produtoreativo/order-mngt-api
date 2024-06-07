@@ -21,7 +21,7 @@ services:
       - ELASTIC_APM_ENVIRONMENT=development
     depends_on:
       - magento
-      - apm
+      # - apm
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:3002 || exit 1"]
       interval: 30s

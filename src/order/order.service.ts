@@ -106,14 +106,16 @@ export class OrderService {
     }
     console.log('Payment method set:', setPaymentMethodResponse);
 
-    console.log('Placing order with cart ID:', cartId);
-    const order = await this.magentoService.placeOrder(token, cartId);
-    if (!order) {
-      throw new BadRequestException('Failed to place order');
-    }
-    console.log('Order placed:', order);
+    // https://developer.adobe.com/commerce/webapi/rest/tutorials/orders/order-create-order/
+    //
+    // console.log('Placing order with cart ID:', cartId);
+    // const order = await this.magentoService.placeOrder(token, cartId);
+    // if (!order) {
+    //   throw new BadRequestException('Failed to place order');
+    // }
+    // console.log('Order placed:', order);
 
-    return order;
+    return setPaymentMethodResponse;
   }
 
   async getOrder(id: string, token: string): Promise<any> {
