@@ -9,6 +9,7 @@ import {
   BadRequestException,
   NotFoundException,
   Logger,
+  UseInterceptors,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -21,9 +22,11 @@ import {
   ApiHeader,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { AuthInterceptor } from 'src/interceptors/auth.interceptor';
 
 @ApiTags('Orders')
 @ApiBearerAuth('access-token')
+@UseInterceptors(AuthInterceptor)
 @Controller('orders')
 export class OrderController {
   private readonly logger = new Logger(OrderController.name);
@@ -92,16 +95,16 @@ export class OrderController {
   ) {
     this.logger.log(`Authorization header received: ${authorizationHeader}`);
 
-    if (!authorizationHeader) {
+    /*     if (!authorizationHeader) {
       this.logger.error('Authorization header is missing');
       throw new UnauthorizedException('Authorization header is missing');
-    }
+    } */
 
     const [bearer, token] = authorizationHeader.split(' ');
-    if (bearer !== 'Bearer' || !token) {
+    /*     if (bearer !== 'Bearer' || !token) {
       this.logger.error('Invalid authorization header');
       throw new UnauthorizedException('Invalid authorization header');
-    }
+    } */
 
     try {
       const order = await this.orderService.getOrder(id, token);
