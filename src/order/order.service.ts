@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { MagentoService } from '../magento/magento.service';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto, CreateOrderResponseDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrderService {
@@ -14,106 +14,123 @@ export class OrderService {
     createOrderDto: CreateOrderDto,
     token: string,
   ): Promise<any> {
-    // Validação da flag de endereço
-    if (!createOrderDto.use_default_address) {
-      if (!createOrderDto.billing_address) {
-        throw new BadRequestException(
-          'Billing address is required when use_default_address is false or not provided',
-        );
-      }
-      if (!createOrderDto.shipping_address) {
-        throw new BadRequestException(
-          'Shipping address is required when use_default_address is false or not provided',
-        );
-      }
-    }
+    const cartId = await this.createCart(token);
+    await this.addItemsToCart(createOrderDto.items, token, cartId);
 
-    console.log('Creating cart with token:', token);
+    const { billingAddress, shippingAddress } = await this.getAddresses(
+      createOrderDto,
+      token,
+    );
+
+    await this.setShippingMethod(
+      token,
+      cartId,
+      billingAddress,
+      shippingAddress,
+      createOrderDto.shipping_method.method_code,
+      createOrderDto.shipping_method.carrier_code,
+    );
+
+    const orderId = await this.setPaymentMethod(
+      token,
+      createOrderDto.payment_method.method,
+    );
+
+    return new CreateOrderResponseDto(orderId);
+  }
+
+  private async createCart(token: string): Promise<string> {
     const cartId = await this.magentoService.createCart(token);
     if (!cartId) {
       throw new BadRequestException('Failed to create cart');
     }
-    console.log('Cart created with ID:', cartId);
+    return cartId;
+  }
 
-    for (const item of createOrderDto.items) {
-      console.log('Adding item to cart:', item);
+  private async addItemsToCart(
+    items: any[],
+    token: string,
+    cartId: string,
+  ): Promise<void> {
+    for (const item of items) {
       const addItemResponse = await this.magentoService.addItemToCart(
         token,
         cartId,
         item.sku,
-        item.quantity,
+        item.qty,
       );
       if (!addItemResponse) {
         throw new BadRequestException('Failed to add item to cart');
       }
-      console.log('Item added to cart:', addItemResponse);
     }
+  }
 
-    let billingAddress = createOrderDto.billing_address;
-    let shippingAddress = createOrderDto.shipping_address;
+  private async getAddresses(
+    createOrderDto: CreateOrderDto,
+    token: string,
+  ): Promise<{ billingAddress: any; shippingAddress: any }> {
+    let { billing_address, shipping_address } = createOrderDto;
 
-    if (createOrderDto.use_default_address) {
-      console.log('Fetching user details with token:', token);
+    const use_default_address = createOrderDto.use_default_address;
+
+    if (use_default_address) {
       const userDetails = await this.magentoService.getUserDetails(token);
       if (!userDetails.addresses || userDetails.addresses.length === 0) {
         throw new BadRequestException('No default addresses found for user.');
       }
 
-      if (!billingAddress) {
-        billingAddress = userDetails.addresses.find(
-          (address: any) => address.default_billing,
-        );
-      }
+      billing_address = userDetails.addresses.find(
+        (address: any) => address.default_billing,
+      );
+      shipping_address = userDetails.addresses.find(
+        (address: any) => address.default_shipping,
+      );
 
-      if (!shippingAddress) {
-        shippingAddress = userDetails.addresses.find(
-          (address: any) => address.default_shipping,
-        );
-      }
-
-      if (!shippingAddress) {
+      if (!shipping_address) {
         throw new BadRequestException(
           'No default shipping address found for user.',
         );
       }
     }
 
-    if (!billingAddress || !shippingAddress) {
+    if (!billing_address || !shipping_address) {
       throw new BadRequestException('Billing or shipping address is missing.');
     }
 
-    console.log('Setting shipping method with cart ID:', cartId);
-    const setShippingMethodResponse =
-      await this.magentoService.setShippingMethod(
-        token,
-        billingAddress,
-        shippingAddress,
-        createOrderDto.shipping_method.method_code,
-        createOrderDto.shipping_method.carrier_code,
-      );
-    if (!setShippingMethodResponse) {
+    return {
+      billingAddress: billing_address,
+      shippingAddress: shipping_address,
+    };
+  }
+
+  private async setShippingMethod(
+    token: string,
+    cartId: string,
+    billingAddress: any,
+    shippingAddress: any,
+    methodCode: string,
+    carrierCode: string,
+  ): Promise<void> {
+    const response = await this.magentoService.setShippingMethod(
+      token,
+      billingAddress,
+      shippingAddress,
+      methodCode,
+      carrierCode,
+    );
+    if (!response) {
       throw new BadRequestException('Failed to set shipping method');
     }
-    console.log('Shipping method set:', setShippingMethodResponse);
+  }
 
-    console.log('Setting payment method with cart ID:', cartId);
-    const setPaymentMethodResponse = await this.magentoService.setPaymentMethod(
-      token,
-      { method: createOrderDto.payment_method.method },
-    );
-    if (!setPaymentMethodResponse) {
+  private async setPaymentMethod(token: string, method: string): Promise<any> {
+    const response = await this.magentoService.setPaymentMethod(token, {
+      method,
+    });
+    if (!response) {
       throw new BadRequestException('Failed to set payment method');
     }
-    console.log('Payment method set:', setPaymentMethodResponse);
-
-    console.log('Placing order with cart ID:', cartId);
-    const order = await this.magentoService.placeOrder(token, cartId);
-    if (!order) {
-      throw new BadRequestException('Failed to place order');
-    }
-    console.log('Order placed:', order);
-
-    return order;
+    return response;
   }
 
   async getOrder(id: string, token: string): Promise<any> {

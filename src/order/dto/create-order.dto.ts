@@ -60,12 +60,7 @@ export class AddressDto {
   telephone: string;
 }
 
-class ItemDto {
-  @ApiProperty({ example: 1, description: 'Product ID' })
-  @IsNumber()
-  @IsPositive()
-  product_id: number;
-
+class CartItemDto {
   @ApiProperty({ example: 'product-sku', description: 'Product SKU' })
   @IsString()
   @IsNotEmpty()
@@ -74,17 +69,7 @@ class ItemDto {
   @ApiProperty({ example: 1, description: 'Quantity of the product' })
   @IsNumber()
   @IsPositive()
-  quantity: number;
-
-  @ApiProperty({ example: 100, description: 'Price of the product' })
-  @IsNumber()
-  @IsPositive()
-  price: number;
-
-  @ApiProperty({ example: 'Product Name', description: 'Name of the product' })
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+  qty: number;
 }
 
 class PaymentMethodDto {
@@ -140,12 +125,12 @@ export class CreateOrderDto {
   @Type(() => AddressDto)
   shipping_address?: AddressDto;
 
-  @ApiProperty({ type: [ItemDto], description: 'List of items' })
+  @ApiProperty({ type: [CartItemDto], description: 'List of items' })
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => ItemDto)
-  items: ItemDto[];
+  @Type(() => CartItemDto)
+  items: CartItemDto[];
 
   @ApiProperty({ type: PaymentMethodDto, description: 'Payment method' })
   @ValidateNested()
@@ -165,4 +150,15 @@ export class CreateOrderDto {
   @IsOptional()
   @IsBoolean()
   use_default_address?: boolean;
+}
+
+export class CreateOrderResponseDto {
+  @ApiProperty({ example: '5' })
+  @IsString()
+  @IsNotEmpty()
+  orderId: string;
+
+  constructor(orderId: string) {
+    this.orderId = orderId;
+  }
 }
