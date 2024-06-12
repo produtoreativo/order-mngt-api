@@ -1,21 +1,22 @@
 import {
-  Body,
   Controller,
+  Post,
   Get,
   Param,
-  Post,
+  Body,
   Headers,
-  UnauthorizedException,
-  BadRequestException,
-  NotFoundException,
-  Logger,
+  UseInterceptors,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { GetOrderResponseDto } from './dto/get-order-response.dto';
+import { CreateOrderValidationInterceptor } from './interceptors/create-order-validation.interceptor';
+import { TransformResponseInterceptor } from '../interceptors/transform-response.interceptor';
+import { GetOrderValidationInterceptor } from './interceptors/get-order-validation.interceptor';
 import {
   ApiTags,
-  ApiResponse,
   ApiOperation,
+  ApiResponse,
   ApiBody,
   ApiParam,
   ApiHeader,
@@ -24,10 +25,9 @@ import {
 
 @ApiTags('Orders')
 @ApiBearerAuth('access-token')
+@UseInterceptors(TransformResponseInterceptor)
 @Controller('orders')
 export class OrderController {
-  private readonly logger = new Logger(OrderController.name);
-
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
@@ -36,36 +36,18 @@ export class OrderController {
   @ApiResponse({
     status: 201,
     description: 'Order created successfully.',
+    type: GetOrderResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid order data provided.' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @UseInterceptors(CreateOrderValidationInterceptor)
   async createOrder(
     @Body() orderDto: CreateOrderDto,
     @Headers('Authorization') authorizationHeader: string,
   ) {
-    this.logger.log(`Authorization header received: ${authorizationHeader}`);
-
-    if (!authorizationHeader) {
-      this.logger.error('Authorization header is missing');
-      throw new UnauthorizedException('Authorization header is missing');
-    }
-
-    const [bearer, token] = authorizationHeader.split(' ');
-    if (bearer !== 'Bearer' || !token) {
-      this.logger.error('Invalid authorization header');
-      throw new UnauthorizedException('Invalid authorization header');
-    }
-
-    try {
-      const order = await this.orderService.createOrder(orderDto, token);
-      if (!order) {
-        throw new BadRequestException('Failed to create order');
-      }
-      return order;
-    } catch (error) {
-      this.logger.error(`Error creating order: ${error.message}`);
-      throw new BadRequestException(error.message);
-    }
+    const token = authorizationHeader.split(' ')[1];
+    const order = await this.orderService.createOrder(orderDto, token);
+    return order;
   }
 
   @Get(':id')
@@ -82,36 +64,17 @@ export class OrderController {
   @ApiResponse({
     status: 200,
     description: 'Order retrieved successfully.',
-    type: CreateOrderDto,
+    type: GetOrderResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Order not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @UseInterceptors(GetOrderValidationInterceptor)
   async getOrder(
     @Param('id') id: string,
     @Headers('Authorization') authorizationHeader: string,
   ) {
-    this.logger.log(`Authorization header received: ${authorizationHeader}`);
-
-    if (!authorizationHeader) {
-      this.logger.error('Authorization header is missing');
-      throw new UnauthorizedException('Authorization header is missing');
-    }
-
-    const [bearer, token] = authorizationHeader.split(' ');
-    if (bearer !== 'Bearer' || !token) {
-      this.logger.error('Invalid authorization header');
-      throw new UnauthorizedException('Invalid authorization header');
-    }
-
-    try {
-      const order = await this.orderService.getOrder(id, token);
-      if (!order) {
-        throw new NotFoundException('Order not found');
-      }
-      return order;
-    } catch (error) {
-      this.logger.error(`Error retrieving order: ${error.message}`);
-      throw new NotFoundException(error.message);
-    }
+    const token = authorizationHeader.split(' ')[1];
+    const order = await this.orderService.getOrder(id, token);
+    return order;
   }
 }
