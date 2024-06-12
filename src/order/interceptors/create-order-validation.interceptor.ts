@@ -25,7 +25,6 @@ export class CreateOrderValidationInterceptor implements NestInterceptor {
       throw new BadRequestException(errors);
     }
 
-    // Validação da flag de endereço
     if (!createOrderDto.use_default_address) {
       if (!createOrderDto.billing_address) {
         throw new BadRequestException(

@@ -3,8 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { OrderModule } from './order/order.module';
 import { AppController } from './app.controller';
 import { HttpModule } from '@nestjs/axios';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { TransformResponseInterceptor } from './interceptors/transform-response.interceptor';
+import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 @Module({
@@ -22,10 +21,6 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TransformResponseInterceptor,
     },
   ],
   controllers: [AppController],

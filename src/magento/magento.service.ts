@@ -1,9 +1,19 @@
 import axios from 'axios';
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MagentoService {
-  private magentoUrl = process.env.MAGENTO_URL;
+  private magentoUrl: string;
+
+  constructor(private configService: ConfigService) {
+    this.magentoUrl = this.configService.get<string>('MAGENTO_URL');
+  }
+
   async addItemToCart(
     token: string,
     quote_id: string,
@@ -19,17 +29,16 @@ export class MagentoService {
       cartItem: {
         sku,
         qty,
-        quote_id: quote_id.toString(),
+        quote_id,
       },
     };
-    console.log(
-      `Adding item to cart with URL: ${url}, token: ${token}, and data: ${JSON.stringify(
-        data,
-      )}`,
-    );
-    const response = await axios.post(url, data, { headers });
-    console.log('Item added to cart with response:', response.data);
-    return response.data;
+
+    try {
+      const response = await axios.post(url, data, { headers });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to add item to cart: ' + error.message);
+    }
   }
 
   async setShippingMethod(
@@ -52,30 +61,12 @@ export class MagentoService {
         shipping_method_code: methodCode,
       },
     };
-    console.log(
-      `Setting shipping method with URL: ${url}, token: ${token}, and data: ${JSON.stringify(
-        data,
-      )}`,
-    );
 
     try {
       const response = await axios.post(url, data, { headers });
-      console.log('Shipping method set with response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('setShippingMethod - Detalhes do erro:', error);
-      if (error.response) {
-        console.error(
-          `setShippingMethod - Erro na resposta da API: Status ${error.response.status}`,
-          error.response.data,
-        );
-        throw new Error(
-          error.response.data.message || 'Erro na resposta da API',
-        );
-      } else {
-        console.error('setShippingMethod - Erro na requisição:', error.message);
-        throw new Error('Erro na requisição para a API Magento');
-      }
+      throw new Error('Failed to set shipping method: ' + error.message);
     }
   }
 
@@ -88,14 +79,13 @@ export class MagentoService {
     const data = {
       payment_method: paymentMethod,
     };
-    console.log(
-      `Setting payment method with URL: ${url}, token: ${token}, and data: ${JSON.stringify(
-        data,
-      )}`,
-    );
-    const response = await axios.post(url, data, { headers });
-    console.log('Payment method set with response:', response.data);
-    return response.data;
+
+    try {
+      const response = await axios.post(url, data, { headers });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to set payment method: ' + error.message);
+    }
   }
 
   async createCart(token: string): Promise<string> {
@@ -104,21 +94,28 @@ export class MagentoService {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
-    console.log(`Creating cart with URL: ${url} and token: ${token}`);
-    const response = await axios.post(url, {}, { headers });
-    console.log('Cart created with response:', response.data);
-    return response.data;
+
+    try {
+      const response = await axios.post(url, {}, { headers });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to create cart: ' + error.message);
+    }
   }
+
   async getUserDetails(token: string): Promise<any> {
     const url = `${this.magentoUrl}/rest/V1/customers/me`;
     const headers = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
-    console.log(`Fetching user details with URL: ${url} and token: ${token}`);
-    const response = await axios.get(url, { headers });
-    console.log('User details fetched with response:', response.data);
-    return response.data;
+
+    try {
+      const response = await axios.get(url, { headers });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to fetch user details: ' + error.message);
+    }
   }
 
   async getOrderById(id: string, token: string): Promise<any> {
@@ -127,25 +124,17 @@ export class MagentoService {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
-    console.log(`Fetching order details with URL: ${url} and token: ${token}`);
+
     try {
       const response = await axios.get(url, { headers });
-      console.log('Order details fetched with response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('getOrderById - Detalhes do erro:', error);
-      if (error.response) {
-        console.error(
-          `getOrderById - Erro na resposta da API: Status ${error.response.status}`,
-          error.response.data,
-        );
-        throw new Error(
-          error.response.data.message || 'Erro na resposta da API',
-        );
-      } else {
-        console.error('getOrderById - Erro na requisição:', error.message);
-        throw new Error('Erro na requisição para a API Magento');
+      if (error.response && error.response.status === 404) {
+        throw new NotFoundException('Order not found');
       }
+      throw new InternalServerErrorException(
+        'Failed to fetch order details: ' + error.message,
+      );
     }
   }
 }

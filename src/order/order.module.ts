@@ -1,26 +1,22 @@
 import { Module } from '@nestjs/common';
-import { HttpModule } from '@nestjs/axios';
-import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
-import { MagentoService } from '../magento/magento.service';
-import { AuthValidationInterceptor } from './interceptors/auth-validation.interceptor';
-import { TransformResponseInterceptor } from '../interceptors/transform-response.interceptor';
+import { OrderController } from './order.controller';
+import { HttpModule } from '@nestjs/axios';
+import { AddressService } from '../address/address.service';
+import { CartService } from '../cart/cart.service';
+import { PaymentService } from '../payment/payment.service';
+import { ShippingService } from '../shipping/shipping.service';
+import { MagentoModule } from '../magento/magento.module';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, MagentoModule],
   controllers: [OrderController],
   providers: [
     OrderService,
-    MagentoService,
-    {
-      provide: 'APP_INTERCEPTOR',
-      useClass: AuthValidationInterceptor,
-    },
-    {
-      provide: 'APP_INTERCEPTOR',
-      useClass: TransformResponseInterceptor,
-    },
+    AddressService,
+    CartService,
+    PaymentService,
+    ShippingService,
   ],
-  exports: [OrderService, MagentoService],
 })
 export class OrderModule {}

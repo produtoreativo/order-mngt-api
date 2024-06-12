@@ -4,14 +4,15 @@ import {
   Get,
   Param,
   Body,
-  UseInterceptors,
   Headers,
-  BadRequestException,
-  NotFoundException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { GetOrderResponseDto } from './dto/get-order-response.dto';
+import { CreateOrderValidationInterceptor } from './interceptors/create-order-validation.interceptor';
+import { TransformResponseInterceptor } from '../interceptors/transform-response.interceptor';
+import { GetOrderValidationInterceptor } from './interceptors/get-order-validation.interceptor';
 import {
   ApiTags,
   ApiOperation,
@@ -21,14 +22,10 @@ import {
   ApiHeader,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { AuthValidationInterceptor } from './interceptors/auth-validation.interceptor';
-import { CreateOrderValidationInterceptor } from './interceptors/create-order-validation.interceptor';
-import { TransformResponseInterceptor } from '../interceptors/transform-response.interceptor';
-import { ValidateResponseInterceptor } from '../interceptors/validate-response.interceptor'; // Import do interceptor de validação
 
 @ApiTags('Orders')
 @ApiBearerAuth('access-token')
-@UseInterceptors(AuthValidationInterceptor, TransformResponseInterceptor) // Adiciona o interceptor de validação aqui
+@UseInterceptors(TransformResponseInterceptor)
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
@@ -49,12 +46,8 @@ export class OrderController {
     @Headers('Authorization') authorizationHeader: string,
   ) {
     const token = authorizationHeader.split(' ')[1];
-    try {
-      const order = await this.orderService.createOrder(orderDto, token);
-      return new GetOrderResponseDto(order); // Certifique-se de criar uma instância
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+    const order = await this.orderService.createOrder(orderDto, token);
+    return order;
   }
 
   @Get(':id')
@@ -75,20 +68,13 @@ export class OrderController {
   })
   @ApiResponse({ status: 404, description: 'Order not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @UseInterceptors(ValidateResponseInterceptor)
+  @UseInterceptors(GetOrderValidationInterceptor)
   async getOrder(
     @Param('id') id: string,
     @Headers('Authorization') authorizationHeader: string,
   ) {
     const token = authorizationHeader.split(' ')[1];
-    try {
-      const order = await this.orderService.getOrder(id, token);
-      if (!order) {
-        throw new NotFoundException('Order not found');
-      }
-      return new GetOrderResponseDto(order);
-    } catch (error) {
-      throw new NotFoundException(error.message);
-    }
+    const order = await this.orderService.getOrder(id, token);
+    return order;
   }
 }

@@ -14,6 +14,7 @@ export class TransformResponseInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((response) => {
         if (response?.data) {
+          console.log(`Order: ${JSON.stringify(response.data)}`);
           const orderResponse = new GetOrderResponseDto(response.data);
           return {
             data: orderResponse,

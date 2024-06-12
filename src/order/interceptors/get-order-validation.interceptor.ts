@@ -8,10 +8,10 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { validateSync } from 'class-validator';
-import { GetOrderResponseDto } from '../order/dto/get-order-response.dto';
+import { GetOrderResponseDto } from '../dto/get-order-response.dto';
 
 @Injectable()
-export class ValidateResponseInterceptor implements NestInterceptor {
+export class GetOrderValidationInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map((response) => {
@@ -19,9 +19,13 @@ export class ValidateResponseInterceptor implements NestInterceptor {
         const errors = validateSync(responseDto);
 
         if (errors.length > 0) {
-          throw new InternalServerErrorException('Invalid response structure');
+          const errorMessages = errors
+            .map((error) => JSON.stringify(error.constraints))
+            .join(', ');
+          throw new InternalServerErrorException(
+            `Invalid response structure: errors: ${errorMessages}`,
+          );
         }
-
         return response;
       }),
     );
