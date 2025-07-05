@@ -4,6 +4,8 @@
 
 newrelic.js
 
+.env
+
 # Logs
 logs
 *.log

@@ -4,9 +4,6 @@ import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import Order from './order/Product';
 import OrderDto from './OrderDto';
-
-import * as newrelic from 'newrelic';
-
 @Injectable()
 export class AppService {
   constructor(
@@ -104,17 +101,15 @@ export class AppService {
       return cart3.data;
     } catch (e) {
       const timestamp = Date.now();
-      newrelic.recordLogEvent({
-        message: e.message || 'AggregateError',
-        level: 'error',
-        timestamp,
-        e,
-      });
+      // newrelic.recordLogEvent({
+      //   message: e.message || 'AggregateError',
+      //   level: 'error',
+      //   timestamp,
+      //   e,
+      // });
       const isExpected = false;
-      newrelic.noticeError(e, e.metadata, isExpected);
-      // const error = new Error(e.message || 'AggregateError');
-      // this.logger.setContext('ExceptionsHandler');
-      // this.logger.error(error);
+      // newrelic.noticeError(e, e.metadata, isExpected);
+      throw new Error(`Error creating order: ${e.message}`);
     }
 
     // return null;
