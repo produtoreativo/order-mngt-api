@@ -6,6 +6,9 @@ import Order from './order/Product';
 import OrderDto from './OrderDto';
 @Injectable()
 export class AppService {
+  createOrderGroup(orderDto: OrderDto) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     private readonly httpService: HttpService,
     @InjectPinoLogger(AppService.name)
@@ -13,6 +16,7 @@ export class AppService {
   ) {}
 
   getOrder(id: string) {
+    this.logger.info(`#1: BUSCANDO O PEDIDO ${id}`);
     throw new Error('Method not implemented.');
   }
 
@@ -27,7 +31,11 @@ export class AppService {
       this.logger.info('Headers', headers);
 
       this.logger.info('#1: CRIA O CARRINHO OU QUOTE');
-      const responde_quote_id = await this.httpService.axiosRef.post(pathUrl, {}, { headers });
+      const responde_quote_id = await this.httpService.axiosRef.post(
+        pathUrl,
+        {},
+        { headers },
+      );
       const quote_id = responde_quote_id.data;
       this.logger.info('#1.1: CRIOU O CARRINHO OU QUOTE', quote_id);
 
@@ -100,14 +108,13 @@ export class AppService {
 
       return cart3.data;
     } catch (e) {
-      const timestamp = Date.now();
+      // const timestamp = Date.now();
       // newrelic.recordLogEvent({
       //   message: e.message || 'AggregateError',
       //   level: 'error',
       //   timestamp,
       //   e,
       // });
-      const isExpected = false;
       // newrelic.noticeError(e, e.metadata, isExpected);
       throw new Error(`Error creating order: ${e.message}`);
     }
