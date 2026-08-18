@@ -1,6 +1,6 @@
 sonar.projectKey=order-mngt-api
 sonar.host.url=http://localhost:9000
-sonar.login=sqp_7867f083e1ca1c38dbdd60469422d208d65b46b8
+sonar.token=sqp_dfdd1cf03329c7fd9da9ec57734187231e543b55
 sonar.javascript.lcov.reportPaths=coverage/lcov.info
 sonar.testExecutionReportPaths=coverage/test-reporter.xml
 sonar.sources=src

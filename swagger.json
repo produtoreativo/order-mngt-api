@@ -1,0 +1,120 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/order": {
+      "post": {
+        "operationId": "AppController_createOrder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cart"
+        ]
+      }
+    },
+    "/offer/{id}": {
+      "get": {
+        "operationId": "AppController_getOffer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Carrinho atual do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "cart"
+        ]
+      }
+    },
+    "/order/{id}": {
+      "get": {
+        "operationId": "AppController_getOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cart"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Minha API",
+    "description": "Documentação da API com Swagger",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "OrderDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "example": "coca-cola",
+            "description": "SKU para o Magento"
+          },
+          "token": {
+            "type": "string",
+            "example": "token123",
+            "description": "Token de autenticação"
+          }
+        },
+        "required": [
+          "sku",
+          "token"
+        ]
+      }
+    }
+  }
+}
