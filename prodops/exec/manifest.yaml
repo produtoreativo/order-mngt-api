@@ -48,11 +48,11 @@ conventions:
 
 gates:
   lint:
-    cmd: "echo 'configure your lint command here'"
+    cmd: "npm run lint"
     expect: 0
     when: pre-commit
   acceptance:
-    cmd: "echo 'configure your acceptance test command here'"
+    cmd: "npm run test:e2e"
     expect: 0
     when: pre-ship
 
