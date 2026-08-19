@@ -6,7 +6,7 @@ import Order from './order/Product';
 import OrderDto from './OrderDto';
 @Injectable()
 export class AppService {
-  createOrderGroup(orderDto: OrderDto) {
+  createOrderGroup(_orderDto: OrderDto) {
     throw new Error('Method not implemented.');
   }
   constructor(

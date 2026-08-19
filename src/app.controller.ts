@@ -29,7 +29,7 @@ export class AppController {
     type: OrderDto,
     description: 'Carrinho atual do usuário',
   })
-  async getOffer(@Param('id') id: string) {
+  async getOffer(@Param('id') _id: string) {
     return {};
   }
 
