@@ -9,6 +9,13 @@
 # This file does NOT replace .gitignore.
 # Paths listed here remain versioned and visible to git.
 
+# ── Product root files ────────────────────────────────────────────────────────
+# README.md is the product README (NestJS app), not the framework docs README.
+# README.en.md and consumers.yaml are framework-repo-only files.
+README.md
+README.en.md
+consumers.yaml
+
 # ── Product artifacts ─────────────────────────────────────────────────────────
 prodops/artifacts/
 
